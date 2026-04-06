@@ -1,16 +1,20 @@
 "use client";
 
 import { AuthProvider } from "@/context/AuthContext";
-import { PlayerProvider } from "@/context/PlayerContext";
-import NowPlayingBar from "./components/NowPlayingBar";
+import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import QuickMenu from "@/components/QuickMenu";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <AuthProvider>
-      <PlayerProvider>
+      <AudioPlayerProvider>
         {children}
-        <NowPlayingBar />
-      </PlayerProvider>
+        <QuickMenu />
+      </AudioPlayerProvider>
     </AuthProvider>
   );
 }

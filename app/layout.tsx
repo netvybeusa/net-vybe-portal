@@ -1,14 +1,30 @@
 import "./globals.css";
-import { ReactNode } from "react";
-import Providers from "./Providers";
+import { Inter } from "next/font/google";
+import { AuthProvider } from "@/context/AuthContext";
+import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import QuickMenu from "@/components/QuickMenu";
+import HaloMenu from "@/components/HaloMenu";
 
-export const dynamic = "force-dynamic";
+const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export const metadata = {
+  title: "Net Vybe Music",
+  description: "Artist-first streaming platform",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <Providers>{children}</Providers>
+      <body className={inter.className}>
+        <AuthProvider>
+          {/* ✅ ONLY ONE PLAYER SYSTEM */}
+          <AudioPlayerProvider>
+            {children}
+
+            <QuickMenu />
+            <HaloMenu />
+          </AudioPlayerProvider>
+        </AuthProvider>
       </body>
     </html>
   );

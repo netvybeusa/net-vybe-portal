@@ -1,16 +1,23 @@
 "use client";
 
+import DeleteTrackButton from "@/components/DeleteTrackButton";
 import Image from "next/image";
 import { format } from "date-fns";
-import { usePlayer } from "@/context/PlayerContext";
+import { useAudioPlayer } from "@/context/AudioPlayerContext";
 
 type Song = {
   id: string;
-  title: string;
+  title?: string;
   genre?: string | null;
-  url: string;
-  coverUrl?: string | null;
+  mood?: string | null;
+
+  artworkUrl?: string | null;
+
+  // ✅ match your Firestore
+  audioURL?: string | null;
+
   createdAt?: { seconds: number; nanoseconds: number } | null;
+  storagePath?: string | null;
 };
 
 type SongCardProps = {
@@ -18,62 +25,95 @@ type SongCardProps = {
 };
 
 export default function SongCard({ song }: SongCardProps) {
-  const { playTrack } = usePlayer();
+  const {
+    currentTrack,
+    isPlaying,
+    playTrack,
+    togglePlay,
+  } = useAudioPlayer();
 
-  const createdDate =
+  const coverSrc = song.artworkUrl || "/nvm-placeholder.png";
+
+  // ✅ FIXED
+  const audioUrl = song.audioURL || "";
+
+  const rawDate =
     song.createdAt?.seconds
       ? new Date(song.createdAt.seconds * 1000)
       : null;
 
-  const displayDate = createdDate
-    ? format(createdDate, "MMM d, yyyy")
-    : "Just now";
+  const displayDate = rawDate ? format(rawDate, "MMM d, yyyy") : "Just now";
 
-  const coverSrc = song.coverUrl || "/nvm-placeholder.png";
+  const isActive = currentTrack?.id === song.id;
+
+  const handlePlayPause = () => {
+    if (!audioUrl) return;
+
+    // ✅ If same track → toggle
+    if (isActive) {
+      togglePlay();
+    } else {
+      // ✅ If new track → play it
+      playTrack({
+        id: song.id,
+        title: song.title || "Untitled Track",
+        audioURL: audioUrl,
+        artworkUrl: coverSrc,
+        genre: song.genre || "",
+        mood: song.mood || "",
+      });
+    }
+  };
 
   return (
-    <div className="group bg-[#11121A] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden shadow-[0_0_0_rgba(0,0,0,0)] hover:shadow-[0_0_30px_rgba(162,89,255,0.4)] transition">
-
-      {/* Cover Art */}
+    <div
+      className={`group bg-[#11121A] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden transition
+      ${isActive ? "shadow-[0_0_35px_rgba(162,89,255,0.55)]" : "hover:shadow-[0_0_30px_rgba(162,89,255,0.4)]"}`}
+    >
+      {/* Cover */}
       <div className="relative aspect-square w-full overflow-hidden">
         <Image
           src={coverSrc}
-          alt={song.title}
+          alt={song.title || "Track Artwork"}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className={`object-cover transition-transform duration-300
+          ${isActive && isPlaying ? "scale-110" : "group-hover:scale-105"}`}
         />
 
-        {/* Global Play Button */}
+        {/* Play / Pause */}
         <button
+          onClick={handlePlayPause}
           className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/70 text-xs font-semibold border border-[rgba(255,255,255,0.2)] hover:bg-black/90 transition"
-          onClick={() =>
-            playTrack({
-              id: song.id,
-              title: song.title,
-              url: song.url,
-              artworkUrl: song.coverUrl
-            })
-          }
         >
-          Play
+          {isActive && isPlaying ? "Pause" : "Play"}
         </button>
       </div>
 
-      {/* Text */}
+      {/* Info */}
       <div className="p-3">
         <div className="text-sm font-semibold truncate">
-          {song.title}
+          {song.title || "Untitled Track"}
         </div>
 
-        {song.genre && (
+        {(song.genre || song.mood) && (
           <div className="text-[11px] text-[var(--nv-text-muted)] mt-0.5">
-            {song.genre}
+            {song.genre || "Unknown Genre"} • {song.mood || "Unknown Mood"}
           </div>
         )}
 
         <div className="text-[10px] text-[var(--nv-text-muted)] mt-1">
           {displayDate}
         </div>
+
+        {/* Delete */}
+        {song.storagePath && (
+          <div className="mt-3 flex justify-end">
+            <DeleteTrackButton
+              trackId={song.id}
+              storagePath={song.storagePath}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

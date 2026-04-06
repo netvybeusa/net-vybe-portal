@@ -92,10 +92,10 @@ export default function SignupClient() {
 
       setIsSuccess(true);
 
-setTimeout(() => {
-  router.replace("/login");
-}, 1500);
-     
+      setTimeout(() => {
+        router.replace("/login");
+      }, 1500);
+
     } catch (error: any) {
       console.error("❌ SIGNUP ERROR:", error);
 

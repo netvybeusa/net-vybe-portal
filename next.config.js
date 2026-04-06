@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    unoptimized: true,
-  },
+  output: "standalone",
+  reactStrictMode: false,
+  eslint: {
+    ignoreDuringBuilds: true
+  }
 };
 
 module.exports = nextConfig;

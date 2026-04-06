@@ -1,8 +1,20 @@
 "use client";
 
+console.log("🔥 DASHBOARD FILE IS BEING READ 🔥");
+
+export const dynamic = "force-dynamic";
+
+import PleaseSignIn from "@/components/PleaseSignIn";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+
+import PlatformInsights from "@/dashboard/PlatformInsights";
+import ProfileStatus from "@/dashboard/ProfileStatus";
+import RecentUploads from "@/components/RecentUploads";
+
+import Sidebar from "@/components/Sidebar";
+import QuickMenu from "@/components/QuickMenu";
 
 import { db } from "@/firebase/firebaseConfig";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -13,14 +25,12 @@ export default function DashboardPage() {
 
   const [artistName, setArtistName] = useState<string | null>(null);
 
-  // 🔐 Protect route
+  // Debug log
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
-  }, [user, loading, router]);
+    console.log("🔥 DASHBOARD V3 LOADED");
+  }, []);
 
-  // 🎤 Fetch artist name (by UID - correct approach)
+  // Fetch artist name
   useEffect(() => {
     const fetchArtistName = async () => {
       if (!user?.uid) return;
@@ -54,7 +64,7 @@ export default function DashboardPage() {
     fetchArtistName();
   }, [user]);
 
-  // ⏳ Loading state
+  // Loading state
   if (loading || artistName === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0f0f1a] text-purple-300 text-lg">
@@ -63,9 +73,12 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) return null;
+  // Protect route
+  if (!user) {
+    return <PleaseSignIn />;
+  }
 
-  // 🎤 Final display name logic
+  // Display name logic
   const displayName =
     artistName ||
     user.displayName ||
@@ -73,107 +86,99 @@ export default function DashboardPage() {
     "Artist";
 
   return (
-    <div className="min-h-screen bg-[#0f0f1a] text-white px-6 py-8 space-y-10">
+    <div className="flex min-h-screen bg-[#0f0f1a] text-white">
 
-      {/* 🌟 HERO HEADER */}
-      <div className="relative overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-purple-900/40 via-black/40 to-purple-800/30 border border-purple-700/40 shadow-[0_0_40px_rgba(139,92,246,0.35)]">
+      {/* 🌟 LEFT SIDEBAR */}
+      <Sidebar />
 
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_left,_purple,_transparent_60%)]" />
+      {/* 🌟 MAIN CONTENT AREA */}
+      <main className="flex-1 ml-56 px-6 py-8 space-y-10">
 
-        <h1 className="text-4xl font-extrabold text-purple-300 drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]">
-          Welcome, {displayName} 🎤
-        </h1>
+        {/* 🚨 VERSION TEST HEADER */}
+        <div className="text-center text-[#ff4fa3] text-xl font-bold">
+          THE VYBE VAULT
+        </div>
 
-        <p className="text-purple-200 mt-3 text-lg max-w-xl">
-          Your artist hub is live. Upload music, grow your presence, and manage your Vybe.
-        </p>
-      </div>
+        {/* 🌟 HERO HEADER */}
+        <div className="relative overflow-hidden rounded-3xl p-8 bg-gradient-to-br from-purple-900">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_left,_purple-500,_transparent)]" />
 
-      {/* ⚡ QUICK ACTIONS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <h1 className="text-5xl font-bold text-purple-300 relative z-10">
+            Welcome back, {displayName}
+          </h1>
 
-        <div
-          onClick={() => router.push("/music/upload")}
-          className="cursor-pointer rounded-2xl p-6 bg-black/40 border border-purple-700/40 hover:border-purple-400 transition-all duration-200 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:scale-[1.03]"
-        >
-          <h3 className="text-xl font-semibold text-purple-300 mb-2">
-            Upload Music
-          </h3>
-          <p className="text-gray-400 text-sm">
-            Share your latest track with the platform.
+          <p className="text-purple-200 mt-3 text-lg max-w-xl relative z-10">
+            Your artist hub is live. Upload music, grow your presence, and manage your Vybe.
           </p>
         </div>
 
-        <div
-          onClick={() => router.push("/profile")}
-          className="cursor-pointer rounded-2xl p-6 bg-black/40 border border-purple-700/40 hover:border-purple-400 transition-all duration-200 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:scale-[1.03]"
-        >
-          <h3 className="text-xl font-semibold text-purple-300 mb-2">
-            Edit Profile
-          </h3>
-          <p className="text-gray-400 text-sm">
-            Update your artist identity and branding.
-          </p>
+        {/* ⭐ TOP CARDS: PROFILE + INSIGHTS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <ProfileStatus />
+          <PlatformInsights />
         </div>
 
-        <div
-          onClick={() => router.push("/music")}
-          className="cursor-pointer rounded-2xl p-6 bg-black/40 border border-purple-700/40 hover:border-purple-400 transition-all duration-200 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:scale-[1.03]"
-        >
-          <h3 className="text-xl font-semibold text-purple-300 mb-2">
-            View Library
-          </h3>
-          <p className="text-gray-400 text-sm">
-            Browse your uploaded music and submissions.
-          </p>
+        {/* ⭐ RECENT UPLOADS */}
+        <RecentUploads userId={user?.uid} />
+
+        {/* ⚡ QUICK ACTIONS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+
+          <div
+            onClick={() => router.push("/music/upload")}
+            className="cursor-pointer rounded-2xl p-6 bg-black/40 border border-purple-700/40 hover:border-purple-400 transition-all duration-200 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:scale-[1.03]"
+          >
+            <h3 className="text-xl font-semibold text-purple-300 mb-2">
+              Upload Music
+            </h3>
+            <p className="text-gray-400 text-sm">
+              Share your latest track with the platform.
+            </p>
+          </div>
+
+          <div
+            onClick={() => router.push("/profile")}
+            className="cursor-pointer rounded-2xl p-6 bg-black/40 border border-purple-700/40 hover:border-purple-400 transition-all duration-200 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:scale-[1.03]"
+          >
+            <h3 className="text-xl font-semibold text-purple-300 mb-2">
+              Edit Profile
+            </h3>
+            <p className="text-gray-400 text-sm">
+              Update your artist identity and branding.
+            </p>
+          </div>
+
+          <div
+            onClick={() => router.push("/music")}
+            className="cursor-pointer rounded-2xl p-6 bg-black/40 border border-purple-700/40 hover:border-purple-400 transition-all duration-200 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.6)] hover:scale-[1.03]"
+          >
+            <h3 className="text-xl font-semibold text-purple-300 mb-2">
+              View Library
+            </h3>
+            <p className="text-gray-400 text-sm">
+              Browse your uploaded music and submissions.
+            </p>
+          </div>
+
         </div>
 
-      </div>
-
-      {/* 🟣 DASHBOARD PANELS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div className="rounded-2xl p-6 bg-black/40 border border-purple-700/40 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.5)] transition">
-          <h2 className="text-xl font-semibold text-purple-300 mb-3">
-            Recent Uploads
-          </h2>
-          <p className="text-gray-400 text-sm">
-            Your latest tracks will appear here once uploaded.
-          </p>
+        {/* 🔐 LOGOUT */}
+        <div className="pt-6">
+          <button
+            onClick={async () => {
+              await signOut();
+              router.push("/login");
+            }}
+            className="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 font-semibold transition shadow-[0_0_20px_rgba(239,68,68,0.6)]"
+          >
+            Logout
+          </button>
         </div>
 
-        <div className="rounded-2xl p-6 bg-black/40 border border-purple-700/40 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.5)] transition">
-          <h2 className="text-xl font-semibold text-purple-300 mb-3">
-            Profile Status
-          </h2>
-          <p className="text-gray-400 text-sm">
-            Keep your artist profile complete and up to date.
-          </p>
-        </div>
+      </main>
 
-        <div className="rounded-2xl p-6 bg-black/40 border border-purple-700/40 shadow-[0_0_25px_rgba(139,92,246,0.25)] hover:shadow-[0_0_40px_rgba(139,92,246,0.5)] transition">
-          <h2 className="text-xl font-semibold text-purple-300 mb-3">
-            Platform Insights
-          </h2>
-          <p className="text-gray-400 text-sm">
-            Analytics and engagement tools coming soon.
-          </p>
-        </div>
-
-      </div>
-
-      {/* 🔐 LOGOUT */}
-      <div className="pt-6">
-        <button
-          onClick={async () => {
-            await signOut();
-            router.push("/login");
-          }}
-          className="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 font-semibold transition shadow-[0_0_20px_rgba(239,68,68,0.6)]"
-        >
-          Logout
-        </button>
-      </div>
+      {/* 🌟 FLOATING QUICK MENU */}
+      <QuickMenu />
 
     </div>
   );

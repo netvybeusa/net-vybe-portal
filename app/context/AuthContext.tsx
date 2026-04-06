@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // ⭐ Initialize Firebase Auth on the client only
   useEffect(() => {
     let unsubscribe: any;
 
@@ -42,21 +41,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe && unsubscribe();
   }, []);
 
-  // ⭐ SIGN IN
   const signIn = async (email: string, password: string) => {
     const { getAuth, signInWithEmailAndPassword } = await import("firebase/auth");
     const auth = getAuth(app);
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  // ⭐ SIGN UP
   const signUp = async (email: string, password: string) => {
     const { getAuth, createUserWithEmailAndPassword } = await import("firebase/auth");
     const auth = getAuth(app);
     await createUserWithEmailAndPassword(auth, email, password);
   };
 
-  // ⭐ SIGN OUT
   const signOut = async () => {
     const { getAuth } = await import("firebase/auth");
     const auth = getAuth(app);
