@@ -1,6 +1,6 @@
 "use client";
 
-import { useAudioPlayer } from "@/context/PlayerContext";
+import { useAudioPlayer } from "@/context/AudioPlayerContext";
 
 export default function NowPlayingBar() {
   const { currentTrack, isPlaying, togglePlay } = useAudioPlayer();

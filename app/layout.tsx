@@ -1,9 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { AuthProvider } from "@/context/AuthContext";
-import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
-import QuickMenu from "@/components/QuickMenu";
-import HaloMenu from "@/components/HaloMenu";
+import Providers from "./providers";
+import { ReactNode } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,19 +10,15 @@ export const metadata = {
   description: "Artist-first streaming platform",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          {/* ✅ ONLY ONE PLAYER SYSTEM */}
-          <AudioPlayerProvider>
-            {children}
-
-            <QuickMenu />
-            <HaloMenu />
-          </AudioPlayerProvider>
-        </AuthProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

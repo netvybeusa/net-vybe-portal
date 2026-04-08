@@ -3,202 +3,183 @@
 import {
   createContext,
   useContext,
-  useState,
   useRef,
+  useState,
   useEffect,
   ReactNode,
 } from "react";
 
-interface Track {
+type Track = {
   id: string;
   title: string;
-  audioURL: string;
+  url?: string;
+  audioURL?: string;
   artworkUrl?: string;
   genre?: string;
   mood?: string;
-}
+};
 
-interface AudioPlayerContextType {
+type AudioPlayerContextType = {
   currentTrack: Track | null;
   isPlaying: boolean;
-  progress: number;
-  duration: number;
   queue: Track[];
-  isFullScreen: boolean;
-  isMiniPlayerOpen: boolean;
-
   playTrack: (track: Track) => void;
+  pause: () => void;
   togglePlay: () => void;
-  seek: (time: number) => void;
-  nextTrack: () => void;
-  prevTrack: () => void;
-
-  openFullScreen: () => void;
-  closeFullScreen: () => void;
-
+  isMiniPlayerOpen: boolean;
   openMiniPlayer: () => void;
   closeMiniPlayer: () => void;
+  duration: number;
+  progress: number;
+  seek: (time: number) => void;
+};
 
-  audioRef: React.MutableRefObject<HTMLAudioElement | null>;
-}
-
-const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(
-  undefined
-);
+const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null);
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [queue, setQueue] = useState<Track[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [queue, setQueue] = useState<Track[]>([]);
   const [isMiniPlayerOpen, setIsMiniPlayerOpen] = useState(false);
 
-  // 🔥 LOAD METADATA
-  const handleLoadedMetadata = () => {
-    if (!audioRef.current) return;
-    setDuration(audioRef.current.duration);
-  };
+  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(0);
 
-  // 🔥 UPDATE PROGRESS
-  const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
-    setProgress(audioRef.current.currentTime);
-  };
+  useEffect(() => {
+    const audio = new Audio();
+    audioRef.current = audio;
 
-  // 🔥 AUTO NEXT
-  const handleEnded = () => {
-    nextTrack();
-  };
+    return () => {
+      audio.pause();
+      audio.src = "";
+      audioRef.current = null;
+    };
+  }, []);
 
-  // 🚨 PLAY TRACK (FULL FIXED VERSION)
-  const playTrack = (track: Track) => {
+  const playTrack = async (track: Track) => {
     if (!audioRef.current) return;
 
-    console.log("🎧 Playing:", track.audioURL);
+    const audio = audioRef.current;
+    const source = track.url || track.audioURL;
 
-    setCurrentTrack(track);
-    setIsPlaying(true);
+    console.log("🎧 PLAY TRIGGERED", track);
+    console.log("🎧 SOURCE URL:", source);
 
-    // Add to queue
-    setQueue((prev) => {
-      const exists = prev.find((t) => t.id === track.id);
-      return exists ? prev : [...prev, track];
-    });
-
-    // ✅ RESET AUDIO FIRST
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-
-    // ✅ SET SOURCE
-    audioRef.current.src = track.audioURL;
-
-    // ✅ FORCE LOAD
-    audioRef.current.load();
-
-    // ✅ PLAY (WITH ERROR HANDLING)
-    audioRef.current
-      .play()
-      .then(() => {
-        console.log("✅ Audio playing");
-      })
-      .catch((err) => {
-        console.error("❌ Play failed:", err);
-      });
-  };
-
-  // 🔥 TOGGLE PLAY
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current
-        .play()
-        .catch((err) => console.error("Play error:", err));
+    if (!source) {
+      console.warn("❌ No audio source found");
+      return;
     }
 
-    setIsPlaying(!isPlaying);
-  };
+    const normalizedTrack: Track = {
+      ...track,
+      url: source,
+    };
 
-  // 🔥 SEEK
-  const seek = (time: number) => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = time;
-    setProgress(time);
-  };
+    setCurrentTrack(normalizedTrack);
+    setIsMiniPlayerOpen(true);
+    setProgress(0);
+    setDuration(0);
 
-  // 🔥 NEXT
-  const nextTrack = () => {
-    if (!currentTrack) return;
+    setQueue((prev) => {
+      const exists = prev.find((t) => t.id === track.id);
+      return exists ? prev : [...prev, normalizedTrack];
+    });
 
-    const index = queue.findIndex((t) => t.id === currentTrack.id);
-    const next = queue[index + 1];
+    audio.pause();
+    audio.currentTime = 0;
 
-    if (next) {
-      playTrack(next);
-    } else {
+    try {
+      audio.src = source;
+      audio.load();
+      await audio.play();
+
+      console.log("✅ Audio playing");
+      setIsPlaying(true);
+    } catch (err) {
+      console.error("❌ Audio play failed:", err);
+      alert("This audio format is not supported. Please upload an MP3.");
       setIsPlaying(false);
     }
   };
 
-  // 🔥 PREV
-  const prevTrack = () => {
-    if (!currentTrack) return;
+  const pause = () => {
+    if (!audioRef.current) return;
 
-    const index = queue.findIndex((t) => t.id === currentTrack.id);
-    const prev = queue[index - 1];
+    audioRef.current.pause();
+    setIsPlaying(false);
+  };
 
-    if (prev) {
-      playTrack(prev);
+  const togglePlay = async () => {
+    if (!audioRef.current || !currentTrack) return;
+
+    const audio = audioRef.current;
+
+    if (isPlaying) {
+      pause();
+    } else {
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.error("❌ Play failed:", err);
+      }
     }
   };
 
-  const openFullScreen = () => setIsFullScreen(true);
-  const closeFullScreen = () => setIsFullScreen(false);
-
   const openMiniPlayer = () => setIsMiniPlayerOpen(true);
   const closeMiniPlayer = () => setIsMiniPlayerOpen(false);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+
+    const updateTime = () => {
+      setProgress(audio.currentTime);
+      setDuration(audio.duration || 0);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener("timeupdate", updateTime);
+    audio.addEventListener("loadedmetadata", updateTime);
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("loadedmetadata", updateTime);
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, []);
+
+  const seek = (time: number) => {
+    if (!audioRef.current) return;
+
+    audioRef.current.currentTime = time;
+    setProgress(time);
+  };
 
   return (
     <AudioPlayerContext.Provider
       value={{
         currentTrack,
         isPlaying,
-        progress,
-        duration,
         queue,
-        isFullScreen,
-        isMiniPlayerOpen,
-
         playTrack,
+        pause,
         togglePlay,
-        seek,
-        nextTrack,
-        prevTrack,
-
-        openFullScreen,
-        closeFullScreen,
-
+        isMiniPlayerOpen,
         openMiniPlayer,
         closeMiniPlayer,
-
-        audioRef,
+        duration,
+        progress,
+        seek,
       }}
     >
-      {/* 🔥 IMPORTANT: AUDIO ELEMENT */}
-      <audio
-        ref={audioRef}
-        onLoadedMetadata={handleLoadedMetadata}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={handleEnded}
-      />
-
       {children}
     </AudioPlayerContext.Provider>
   );
@@ -206,8 +187,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
 export function useAudioPlayer() {
   const context = useContext(AudioPlayerContext);
+
   if (!context) {
     throw new Error("useAudioPlayer must be used within AudioPlayerProvider");
   }
+
   return context;
 }

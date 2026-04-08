@@ -13,6 +13,8 @@ export default function Providers({
     <AuthProvider>
       <AudioPlayerProvider>
         {children}
+
+        {/* ✅ THIS IS THE MISSING PIECE */}
         <QuickMenu />
       </AudioPlayerProvider>
     </AuthProvider>

@@ -3,6 +3,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import Link from "next/link";
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export default function QuickMenu() {
   const {
@@ -17,35 +19,27 @@ export default function QuickMenu() {
     closeMiniPlayer,
   } = useAudioPlayer();
 
-  const isOnPlayerPage =
-    typeof window !== "undefined" &&
-    window.location.pathname.startsWith("/player");
+  const pathname = usePathname();
+  const isOnPlayerPage = pathname?.startsWith("/player") ?? false;
 
-  // Auto-close mini-player on Player Page
-  if (isOnPlayerPage && isMiniPlayerOpen) {
-    closeMiniPlayer();
-  }
+  useEffect(() => {
+    if (isOnPlayerPage) {
+      closeMiniPlayer();
+    }
+  }, [isOnPlayerPage, closeMiniPlayer]);
+
+  console.log("🎛 QuickMenu", {
+    currentTrack,
+    isMiniPlayerOpen,
+    isOnPlayerPage,
+  });
 
   return (
     <>
-      {/* SAFE-AREA PADDING FOR iPHONE */}
       <div className="pb-safe-area" />
 
-      {/* FLOATING ORB */}
       <motion.div
-        className="
-          fixed 
-          bottom-4 right-4 
-          md:bottom-6 md:right-6
-          w-12 h-12 
-          md:w-16 md:h-16
-          z-[9998]
-          rounded-full 
-          bg-gradient-to-br from-purple-600 to-pink-600 
-          shadow-[0_0_25px_rgba(168,85,247,0.45)] 
-          flex items-center justify-center 
-          cursor-pointer
-        "
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 w-12 h-12 md:w-16 md:h-16 z-[9998] rounded-full bg-gradient-to-br from-purple-600 to-pink-600 shadow-[0_0_25px_rgba(168,85,247,0.45)] flex items-center justify-center cursor-pointer"
         onClick={() => {
           if (currentTrack) openMiniPlayer();
         }}
@@ -55,29 +49,15 @@ export default function QuickMenu() {
         <span className="text-white text-xl md:text-2xl">🎵</span>
       </motion.div>
 
-      {/* MINI-PLAYER BUBBLE */}
       <AnimatePresence>
         {isMiniPlayerOpen && currentTrack && !isOnPlayerPage && (
           <motion.div
-            className="
-              fixed 
-              bottom-4 right-4 
-              md:bottom-6 md:right-6
-              z-[9999]
-              rounded-3xl 
-              bg-[#0f0f1a] 
-              border border-purple-700/40 
-              shadow-[0_0_35px_rgba(139,92,246,0.45)] 
-              p-6 
-              w-[85vw] 
-              md:w-80
-            "
+            className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] rounded-3xl bg-[#0f0f1a] border border-purple-700/40 shadow-[0_0_35px_rgba(139,92,246,0.45)] p-6 w-[85vw] md:w-80"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
           >
-            {/* CLOSE BUTTON */}
             <button
               onClick={closeMiniPlayer}
               className="absolute top-3 right-3 text-purple-300 hover:text-purple-400"
@@ -85,26 +65,11 @@ export default function QuickMenu() {
               ✕
             </button>
 
-            {/* ARTWORK + TITLE */}
-            <div
-              className="
-                flex 
-                md:flex-row flex-col 
-                items-center md:items-start 
-                gap-4 
-                mb-4 
-                text-center md:text-left
-              "
-            >
+            <div className="flex md:flex-row flex-col items-center md:items-start gap-4 mb-4 text-center md:text-left">
               <img
-                src={currentTrack.artworkUrl || "/default-art.png"}
+                src={currentTrack.artworkUrl || "/nvm-placeholder.png"}
                 alt={currentTrack.title}
-                className="
-                  w-16 h-16 
-                  rounded-xl 
-                  object-cover 
-                  shadow-[0_0_20px_rgba(168,85,247,0.35)]
-                "
+                className="w-16 h-16 rounded-xl object-cover shadow-[0_0_20px_rgba(168,85,247,0.35)]"
               />
 
               <div>
@@ -121,20 +86,14 @@ export default function QuickMenu() {
               </div>
             </div>
 
-            {/* SCRUBBER */}
             <div className="mb-4 w-full">
               <input
                 type="range"
                 min={0}
-                max={duration}
+                max={duration || 0}
                 value={progress}
                 onChange={(e) => seek(Number(e.target.value))}
-                className="
-                  w-full 
-                  accent-purple-500 
-                  h-2 md:h-1 
-                  rounded-lg
-                "
+                className="w-full accent-purple-500 h-2 md:h-1 rounded-lg"
               />
 
               <div className="flex justify-between text-gray-400 text-xs mt-1">
@@ -143,21 +102,10 @@ export default function QuickMenu() {
               </div>
             </div>
 
-            {/* CONTROLS */}
             <div className="flex justify-center">
               <motion.button
                 onClick={togglePlay}
-                className="
-                  w-12 h-12 
-                  md:w-14 md:h-14 
-                  rounded-full 
-                  bg-purple-600 
-                  hover:bg-purple-700 
-                  shadow-[0_0_25px_rgba(168,85,247,0.45)] 
-                  flex items-center justify-center 
-                  text-2xl md:text-3xl 
-                  text-white
-                "
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-purple-600 hover:bg-purple-700 shadow-[0_0_25px_rgba(168,85,247,0.45)] flex items-center justify-center text-2xl md:text-3xl text-white"
                 animate={{
                   scale: isPlaying ? [1, 1.1, 1] : 1,
                 }}

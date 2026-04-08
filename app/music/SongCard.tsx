@@ -10,10 +10,12 @@ type Song = {
   title?: string;
   genre?: string | null;
   mood?: string | null;
-
   artworkUrl?: string | null;
 
-  // ✅ match your Firestore
+  // ✅ FIXED: correct field name
+  url?: string | null;
+
+  // (optional fallback if old data still exists)
   audioURL?: string | null;
 
   createdAt?: { seconds: number; nanoseconds: number } | null;
@@ -34,8 +36,8 @@ export default function SongCard({ song }: SongCardProps) {
 
   const coverSrc = song.artworkUrl || "/nvm-placeholder.png";
 
-  // ✅ FIXED
-  const audioUrl = song.audioURL || "";
+  // ✅ Use correct field, fallback for legacy data
+  const audioUrl = song.url || song.audioURL || "";
 
   const rawDate =
     song.createdAt?.seconds
@@ -49,15 +51,15 @@ export default function SongCard({ song }: SongCardProps) {
   const handlePlayPause = () => {
     if (!audioUrl) return;
 
-    // ✅ If same track → toggle
     if (isActive) {
+      // ✅ Toggle play/pause for current track
       togglePlay();
     } else {
-      // ✅ If new track → play it
+      // ✅ Play new track with correct data shape
       playTrack({
         id: song.id,
         title: song.title || "Untitled Track",
-        audioURL: audioUrl,
+        url: audioUrl, // ✅ FIXED FIELD
         artworkUrl: coverSrc,
         genre: song.genre || "",
         mood: song.mood || "",
@@ -68,7 +70,11 @@ export default function SongCard({ song }: SongCardProps) {
   return (
     <div
       className={`group bg-[#11121A] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden transition
-      ${isActive ? "shadow-[0_0_35px_rgba(162,89,255,0.55)]" : "hover:shadow-[0_0_30px_rgba(162,89,255,0.4)]"}`}
+      ${
+        isActive
+          ? "shadow-[0_0_35px_rgba(162,89,255,0.55)]"
+          : "hover:shadow-[0_0_30px_rgba(162,89,255,0.4)]"
+      }`}
     >
       {/* Cover */}
       <div className="relative aspect-square w-full overflow-hidden">
@@ -77,7 +83,11 @@ export default function SongCard({ song }: SongCardProps) {
           alt={song.title || "Track Artwork"}
           fill
           className={`object-cover transition-transform duration-300
-          ${isActive && isPlaying ? "scale-110" : "group-hover:scale-105"}`}
+          ${
+            isActive && isPlaying
+              ? "scale-110"
+              : "group-hover:scale-105"
+          }`}
         />
 
         {/* Play / Pause */}
@@ -97,7 +107,8 @@ export default function SongCard({ song }: SongCardProps) {
 
         {(song.genre || song.mood) && (
           <div className="text-[11px] text-[var(--nv-text-muted)] mt-0.5">
-            {song.genre || "Unknown Genre"} • {song.mood || "Unknown Mood"}
+            {song.genre || "Unknown Genre"} •{" "}
+            {song.mood || "Unknown Mood"}
           </div>
         )}
 

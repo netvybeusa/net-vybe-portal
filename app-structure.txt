@@ -1,0 +1,87 @@
+Folder PATH listing
+Volume serial number is 3A5F-3AF3
+C:\USERS\DDEE0\NET-VYBE-PORTAL\APP
+|   favicon.ico
+|   layout.tsx
+|   page.tsx
+|   providers.tsx
+|   
++---Auth
+|       page.tsx
+|       
++---components
+|   |   AudioPlayer.tsx
+|   |   BackButton.tsx
+|   |   DashboardLayout.tsx.bak
+|   |   DeleteTrackButton.tsx
+|   |   FullScreenPlayer.tsx
+|   |   HaloMenu.tsx
+|   |   NavBar.tsx
+|   |   NowPlayingBar.tsx
+|   |   PleaseSignIn.tsx
+|   |   QuickMenu.tsx
+|   |   RecentUploads.tsx
+|   |   Sidebar.tsx
+|   |   
+|   +---signup
+|   |       SlideWrapper.tsx
+|   |       StepArtistInfo.tsx
+|   |       StepConsent.tsx
+|   |       StepNavigation.tsx
+|   |       StepProfile.tsx
+|   |       StepTrackInfo.tsx
+|   |       
+|   \---ui
+|           NeonCard.tsx
+|           
++---context
+|       AudioPlayerContext.tsx
+|       AuthContext.tsx
+|       
++---dashboard
+|       layout.tsx.bak
+|       page.tsx
+|       PlatformInsights.tsx
+|       ProfileStatus.tsx
+|       
++---firebase
+|       firebaseConfig.ts
+|       
++---insights
+|       page.tsx
+|       
++---login
+|       LoginClient.tsx
+|       page.tsx
+|       
++---music
+|   |   page.tsx
+|   |   SongCard.tsx
+|   |   uploadmodal.tsx
+|   |   
+|   \---upload
+|           page.tsx
+|           
++---playback
+|       page.tsx
+|       
++---player
+|       page.tsx
+|       PlayerContent.tsx
+|       
++---profile
+|       page.tsx
+|       
++---settings
+|       page.tsx
+|       
++---signup
+|       page.tsx
+|       SignupClient.tsx
+|       
++---store
+|       useAudioStore.ts
+|       
+\---types
+        SignupForm.ts
+        

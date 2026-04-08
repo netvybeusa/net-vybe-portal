@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import PleaseSignIn from "@/components/PleaseSignIn";
 
 import Sidebar from "@/components/Sidebar";
-import QuickMenu from "@/components/QuickMenu";
 
 import { db, storage } from "@/firebase/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -26,82 +25,80 @@ export default function UploadMusicPage() {
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
 
-  // Protect route
   if (!loading && !user) {
     return <PleaseSignIn />;
   }
 
   const handleUpload = async () => {
+    if (!user) {
+      alert("You must be signed in.");
+      return;
+    }
+
     if (!audioFile) {
       alert("Please select an audio file.");
       return;
     }
 
-    if (!title) {
+    if (
+      audioFile.type !== "audio/mpeg" &&
+      !audioFile.name.toLowerCase().endsWith(".mp3")
+    ) {
+      alert("Please upload an MP3 file only.");
+      return;
+    }
+
+    if (!title.trim()) {
       alert("Please enter a track title.");
       return;
     }
 
     setUploading(true);
+    setProgress(0);
 
     try {
-      // 🎵 Upload audio
-      const audioRef = ref(storage, `tracks/${user.uid}/${audioFile.name}`);
-      const audioTask = uploadBytesResumable(audioRef, audioFile);
+      const fileName = `${Date.now()}_${audioFile.name}`;
+      const audioPath = `tracks/${user.uid}/${fileName}`;
+      const audioRef = ref(storage, audioPath);
 
-      audioTask.on("state_changed", (snapshot) => {
-        const pct =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setProgress(pct);
-      });
+      const snapshot = await uploadBytesResumable(audioRef, audioFile);
+      const audioURL = await getDownloadURL(snapshot.ref);
 
-      await audioTask;
-      const audioURL = await getDownloadURL(audioRef);
-
-      // 🎨 Upload artwork (optional)
       let artworkURL = "";
       if (artworkFile) {
-        const artRef = ref(
-          storage,
-          `artwork/${user.uid}/${artworkFile.name}`
-        );
-        await uploadBytesResumable(artRef, artworkFile);
-        artworkURL = await getDownloadURL(artRef);
+        const artPath = `artwork/${user.uid}/${Date.now()}_${artworkFile.name}`;
+        const artRef = ref(storage, artPath);
+        const artSnapshot = await uploadBytesResumable(artRef, artworkFile);
+        artworkURL = await getDownloadURL(artSnapshot.ref);
       }
 
-      // 💾 Save to Firestore (FIXED)
       await addDoc(collection(db, "submissions"), {
         uid: user.uid,
-        title,
-        genre,
-        mood,
-
-        // ✅ CRITICAL FIX
-        audioURL: audioURL,
-
+        title: title.trim(),
+        genre: genre.trim(),
+        mood: mood.trim(),
+        url: audioURL,
         artworkUrl: artworkURL,
-        storagePath: `tracks/${user.uid}/${audioFile.name}`,
-
-        // ✅ timestamps
+        storagePath: audioPath,
         createdAt: serverTimestamp(),
         createdAtLocal: new Date(),
       });
 
-      // Reset form
+      setProgress(100);
+
       setAudioFile(null);
       setArtworkFile(null);
       setTitle("");
       setGenre("");
       setMood("");
-      setProgress(0);
 
-      // Redirect
       router.push("/music");
     } catch (error) {
       console.error("Upload error:", error);
       alert("Upload failed. Try again.");
     } finally {
       setUploading(false);
+      setProgress(0);
     }
   };
 
@@ -114,25 +111,18 @@ export default function UploadMusicPage() {
           Upload New Track
         </h1>
 
-        {/* AUDIO */}
         <input
           type="file"
           accept="audio/*"
-          onChange={(e) =>
-            setAudioFile(e.target.files?.[0] || null)
-          }
+          onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
         />
 
-        {/* ARTWORK */}
         <input
           type="file"
           accept="image/*"
-          onChange={(e) =>
-            setArtworkFile(e.target.files?.[0] || null)
-          }
+          onChange={(e) => setArtworkFile(e.target.files?.[0] || null)}
         />
 
-        {/* META */}
         <input
           placeholder="Title"
           value={title}
@@ -151,16 +141,12 @@ export default function UploadMusicPage() {
           onChange={(e) => setMood(e.target.value)}
         />
 
-        {/* PROGRESS */}
         {uploading && <p>{progress.toFixed(0)}%</p>}
 
-        {/* BUTTON */}
         <button onClick={handleUpload} disabled={uploading}>
           {uploading ? "Uploading..." : "Upload Track"}
         </button>
       </main>
-
-      <QuickMenu />
     </div>
   );
 }
