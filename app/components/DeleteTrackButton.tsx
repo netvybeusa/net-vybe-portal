@@ -4,36 +4,40 @@ import { useState } from "react";
 import { db, storage } from "@/firebase/firebaseConfig";
 import { doc, deleteDoc } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
-import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 
 export default function DeleteTrackButton({
   trackId,
   storagePath,
+  artworkPath,
 }: {
   trackId: string;
   storagePath: string;
+  artworkPath?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleDelete = async () => {
     setLoading(true);
 
     try {
-      // Delete Firestore document from the correct collection
+      // Delete Firestore document
       await deleteDoc(doc(db, "submissions", trackId));
 
-      // Delete file from Firebase Storage
+      // Delete audio file
       if (storagePath) {
         const fileRef = ref(storage, storagePath);
         await deleteObject(fileRef);
       }
 
-      setOpen(false);
+      // Delete artwork file if present
+      if (artworkPath) {
+        const artworkRef = ref(storage, artworkPath);
+        await deleteObject(artworkRef);
+      }
 
-      // Simpler and more reliable for your current client-side fetch flow
+      setOpen(false);
       window.location.reload();
     } catch (error) {
       console.error("Error deleting track:", error);

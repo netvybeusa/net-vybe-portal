@@ -75,7 +75,7 @@ export default function QuickMenu() {
                 </p>
 
                 <Link
-                  href={`/player?id=${currentTrack.id}`}
+                  href="/player"
                   className="text-xs text-gray-400 hover:text-purple-300"
                 >
                   Open full player →

@@ -39,13 +39,22 @@ export default function UploadMusicPage() {
       return;
     }
 
-    if (
-      audioFile.type !== "audio/mpeg" &&
-      !audioFile.name.toLowerCase().endsWith(".mp3")
-    ) {
-      alert("Please upload an MP3 file only.");
-      return;
-    }
+  const fileType = audioFile.type;
+const fileName = audioFile.name.toLowerCase();
+
+if (
+  !fileType.includes("audio/mpeg") &&   // mp3
+  !fileType.includes("audio/mp4") &&    // mp4 audio
+  !fileType.includes("video/mp4") &&    // mp4 video
+  !fileType.includes("audio/wav") &&    // wav (some browsers)
+  !fileType.includes("audio/x-wav") &&  // wav fallback
+  !fileName.endsWith(".mp3") &&
+  !fileName.endsWith(".mp4") &&
+  !fileName.endsWith(".wav")
+) {
+  alert("Please upload MP3, MP4, or WAV files only.");
+  return;
+}
 
     if (!title.trim()) {
       alert("Please enter a track title.");
@@ -64,24 +73,27 @@ export default function UploadMusicPage() {
       const audioURL = await getDownloadURL(snapshot.ref);
 
       let artworkURL = "";
-      if (artworkFile) {
-        const artPath = `artwork/${user.uid}/${Date.now()}_${artworkFile.name}`;
-        const artRef = ref(storage, artPath);
-        const artSnapshot = await uploadBytesResumable(artRef, artworkFile);
-        artworkURL = await getDownloadURL(artSnapshot.ref);
-      }
+let artworkPath = "";
+
+if (artworkFile) {
+  artworkPath = `artwork/${user.uid}/${Date.now()}_${artworkFile.name}`;
+  const artRef = ref(storage, artworkPath);
+  const artSnapshot = await uploadBytesResumable(artRef, artworkFile);
+  artworkURL = await getDownloadURL(artSnapshot.ref);
+}
 
       await addDoc(collection(db, "submissions"), {
-        uid: user.uid,
-        title: title.trim(),
-        genre: genre.trim(),
-        mood: mood.trim(),
-        url: audioURL,
-        artworkUrl: artworkURL,
-        storagePath: audioPath,
-        createdAt: serverTimestamp(),
-        createdAtLocal: new Date(),
-      });
+  uid: user.uid,
+  title: title.trim(),
+  genre: genre.trim(),
+  mood: mood.trim(),
+  url: audioURL,
+  artworkUrl: artworkURL,
+  artworkPath, // ✅ NEW
+  storagePath: audioPath,
+  createdAt: serverTimestamp(),
+  createdAtLocal: new Date(),
+});
 
       setProgress(100);
 
@@ -120,7 +132,7 @@ export default function UploadMusicPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-purple-200 mb-2">
-                  Audio File (MP3)
+                  Audio File (MP3 / MP4 / WAV)
                 </label>
                 <input
                   type="file"
